@@ -1,0 +1,113 @@
+<div class="row justify-content-md-center">
+  <div class="col-6">
+    <div class="text-center mt-40">
+      <h1>
+        Checkout — Book Store
+      </h1>
+      <h5 class="text-secondary">
+        {{title}}
+      </h5>
+      <hr class="mt-40">
+      <div class="mt-20 text-info">
+        Total due: ${{amount_dollars}}
+      </div>
+    </div>
+    <div class="card box-shadow mt-40">
+      <div class="card-body">
+        <form id="payment-form">
+          <div>
+            <label for="email">Email address</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com" required>
+          </div>
+
+          <div class="mt-20 text-center text-secondary border-placeholder">
+            <div id="payment-element">
+                          Add Stripe Element here!
+            </div>
+          </div>
+          <div class="mt-20">
+            <button id="submit-button" type="submit" class="btn btn-lg btn-block btn-primary">
+              <div class="spinner hidden" id="spinner"></div>
+              <span id="button-text">Pay ${{amount_dollars}}</span>
+            </button>
+          </div>
+          <div id="payment-message" class="hidden mt-20 text-danger"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // Store payment data to use in the success page
+  const amount = {{amount}};
+  const clientSecret = "{{clientSecret}}";
+  const publishableKey = "{{publishableKey}}";
+  
+  // Initialize Stripe
+  const stripe = Stripe(publishableKey);
+  console.log("Stripe initialized with key:", publishableKey);
+  
+  // Create and mount the Payment Element
+  const elements = stripe.elements({
+    clientSecret: clientSecret
+  });
+  
+  const paymentElement = elements.create('payment');
+  paymentElement.mount('#payment-element');
+  
+  // Handle form submission
+  const form = document.getElementById('payment-form');
+  const submitButton = document.getElementById('submit-button');
+  const spinner = document.getElementById('spinner');
+  const buttonText = document.getElementById('button-text');
+  const paymentMessage = document.getElementById('payment-message');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Disable the submit button to prevent multiple clicks
+    setLoading(true);
+    
+    // Confirm the payment
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/success?payment_intent={PAYMENT_INTENT_ID}&amount=${amount}`
+      },
+      redirect: 'if_required'
+    });
+    
+    if (error) {
+      // Show error message
+      showMessage(error.message);
+      setLoading(false);
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      // Payment succeeded, redirect to success page
+      window.location.href = `/success?payment_intent=${paymentIntent.id}&amount=${amount}`;
+    }
+  });
+  
+  // Helper functions
+  function setLoading(isLoading) {
+    if (isLoading) {
+      submitButton.disabled = true;
+      spinner.classList.remove('hidden');
+      buttonText.classList.add('hidden');
+    } else {
+      submitButton.disabled = false;
+      spinner.classList.add('hidden');
+      buttonText.classList.remove('hidden');
+    }
+  }
+  
+  function showMessage(messageText) {
+    paymentMessage.classList.remove('hidden');
+    paymentMessage.textContent = messageText;
+    setTimeout(() => {
+      paymentMessage.classList.add('hidden');
+      paymentMessage.textContent = '';
+    }, 4000);
+  }
+</script>
