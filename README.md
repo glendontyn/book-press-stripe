@@ -12,8 +12,7 @@ A simple e-commerce application for Stripe Press books with integrated Stripe pa
 
 Step 1. Clone the repository and install dependencies:
 ```bash
-git clone https://github.com/glendonthaiw/stripe-book-press
-cd sa-takehome-project-node
+git clone https://github.com/glendontyn/book-press-stripe.git
 npm install
 ```
 
